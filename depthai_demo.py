@@ -20,6 +20,18 @@ if platform.machine() not in ['armv6l', 'aarch64']:
 is_rpi = platform.machine().startswith('arm') or platform.machine().startswith('aarch64')
 global args, cnn_model2
 
+top_start = (220,200)
+top_end = (672,200)
+top2_start = (0,175)
+top2_end = (220,175)
+top3_start = (220,175)
+top3_end = (220,200)
+
+#bot_start = (0,380)
+#bot_end = (512,380)
+
+line_color = (0,0,255)
+line_thickness = 2
 
 class DepthAI:
     global is_rpi
@@ -27,6 +39,7 @@ class DepthAI:
     nnet_packets = None
     data_packets = None
     runThread = True
+    first_done = False
 
     def reset_process_wd(self):
         global wd_cutoff
@@ -41,6 +54,7 @@ class DepthAI:
         self.runThread = False
 
     def startLoop(self):
+        first_frame = None
         cliArgs = CliArgs()
         args = vars(cliArgs.parse_args())
 
@@ -282,11 +296,15 @@ class DepthAI:
                     data2 = packetData[2, :, :]
                     frame = cv2.merge([data0, data1, data2])
                     if nnet_prev["entries_prev"][camera] is not None:
-                        frame = show_nn(nnet_prev["entries_prev"][camera], frame, NN_json=NN_json, config=config)
+                        #frame = show_nn(nnet_prev["entries_prev"][camera], frame, NN_json=NN_json, config=config)
+                        #print ("%f",nnet_prev["entries_prev"][camera]);
                         if enable_object_tracker and tracklets is not None:
                             frame = show_tracklets(tracklets, frame, labels)
                     cv2.putText(frame, "fps: " + str(frame_count_prev[window_name]), (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0))
-                    cv2.putText(frame, "NN fps: " + str(frame_count_prev['nn'][camera]), (2, frame.shape[0] - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0))
+                    cv2.putText(frame, "NN fps: " + str(frame_count_prev['nn'][camera]), (2, frame.shape[0] - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
+                    cv2.line(frame, top_start, top_end, line_color, line_thickness)
+                    cv2.line(frame, top2_start, top2_end, line_color, line_thickness)
+                    cv2.line(frame, top3_start, top3_end, line_color, line_thickness)
                     cv2.imshow(window_name, frame)
                 elif packet.stream_name in ['left', 'right', 'disparity', 'rectified_left', 'rectified_right']:
                     frame_bgr = packetData
